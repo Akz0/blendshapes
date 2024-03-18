@@ -60,6 +60,56 @@ void processInput(GLFWwindow* window);
 Camera camera;
 Mouse mouse;
 
+const char* label[] = {
+	"NEUTRAL", "JAW_OPEN", "KISS", "L_BROW_LOWER", "L_BROW_NARROW",
+	"L_BROW_RAISE", "LEFT_CLOSED", "L_LOWER_O", "L_UPPER_O",
+	"L_NOSE_WRINKLE", "L_PUFF", "L_SAD", "L_SMILE", "L_SUCK",
+	"R_BROW_LOWER", "R_BROW_NARROW", "R_BROW_RAISE", "REFT_CLOSED",
+	"R_LOWER_O", "R_UPPER_O", "R_NOSE_WRINKLE", "R_PUFF", "R_SAD",
+	"R_SMILE", "R_SUCK"
+};
+
+const char* TestLabel[] = {
+	"Basic","Smooth Vertex","Sphere"
+};
+
+void LoadLowResFace() {
+	Mesh Neutral(NEUTRAL_LOW_RES);
+	Mesh JawOpen(JAW_OPEN_LOW_RES);
+	Mesh Kiss(KISS_LOW_RES);
+	Mesh LBrowLower(L_BROW_LOWER_LOW_RES);
+	Mesh LBrowNarrow(L_BROW_NARROW_LOW_RES);
+	Mesh LBrowRaise(L_BROW_RAISE_LOW_RES);
+	Mesh LeftClosed(LEFT_CLOSED_LOW_RES);
+	Mesh LLowerOpen(L_LOWER_O_LOW_RES);
+	Mesh LUpperOpen(L_UPPER_O_LOW_RES);
+	Mesh LNoseWrinkle(L_NOSE_WRINKLE_LOW_RES);
+	Mesh LPuff(L_PUFF_LOW_RES);
+	Mesh LSad(L_SAD_LOW_RES);
+	Mesh LSmile(L_SMILE_LOW_RES);
+	Mesh LSuck(L_SUCK_LOW_RES);
+	Mesh RBrowLower(R_BROW_LOWER_LOW_RES);
+	Mesh RBrowNarrow(R_BROW_NARROW_LOW_RES);
+	Mesh RBrowRaise(R_BROW_RAISE_LOW_RES);
+	Mesh RightClosed(R_CLOSED_LOW_RES);
+	Mesh RLowerOpen(R_LOWER_O_LOW_RES);
+	Mesh RUpperOpen(R_UPPER_O_LOW_RES);
+	Mesh RNoseWrinkle(R_NOSE_WRINKLE_LOW_RES);
+	Mesh RPuff(R_PUFF_LOW_RES);
+	Mesh RSad(R_SAD_LOW_RES);
+	Mesh RSmile(R_SMILE_LOW_RES);
+	Mesh RSuck(R_SUCK_LOW_RES);
+}
+void LoadHighResFace() {
+	Mesh Neutral(NEUTRAL);
+	Mesh JawOpen(JAW_OPEN);
+	Mesh Kiss(KISS);
+}
+void LoadTestModels() {
+	Mesh Key1("./src/test-model/Basis.obj");
+	Mesh Key2("./src/test-model/Smooth Vertex.obj");
+	Mesh Key3("./src/test-model/Circle.obj");
+}
 int main(void) {
 	//Window Creation
 	if (!glfwInit())
@@ -89,12 +139,6 @@ int main(void) {
 	glfwSwapInterval(0);
 
 	Shader phongShader("./src/shaders/phong.vert", "./src/shaders/phong.frag");
-	Shader basicShader("./src/shaders/basic.vert", "./src/shaders/basic.frag");
-
-	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LEQUAL);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	glClearColor(0.38, 0.38, 0.38, 1.0);
 
 	WindowResizingHandler(window, WINDOW_WIDTH, WINDOW_HEIGHT);
 
@@ -106,16 +150,31 @@ int main(void) {
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init("#version 330");
 	
-	Mesh mesh_Test("./src/test-model/Key 1.obj");
-	Model::Load(mesh_Test, basicShader);
+	
+	//LoadTestModels();
+	//LoadHighResFace();
+	LoadLowResFace();
+	Model::Initialize();
 
-	glm::vec3 finalPosition(1.0f);
+#pragma region Inspector Controls
+	glm::vec3 finalPosition(0.0,0.0,-60.0f);
 	glm::vec3 finalScale(1.0f);
 	glm::vec3 finalRotation(0.0f);
+	static ImVec4 finalMeshColor = ImVec4(1.0f, 0.0f, 0.0f, 1.0f); 
 
+	//Light Information
+	static ImVec4 LightColor = ImVec4(1.0, 1.0, 1.0, 1.0);
+	glm::vec3 LightPosition(0.0, 3.0, -3.0);
+	static float LightPower = 1.0f;
+	static float AmbientPower = 0.2f;
+	static float DiffusePower = 0.2f;
+
+#pragma endregion
 
 	while (!glfwWindowShouldClose(window))
 	{	
+
+#pragma region Basic OpenGL Setup
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LESS);
 		glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
@@ -135,25 +194,86 @@ int main(void) {
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
+#pragma endregion
 
 		processInput(window);
+		Model::Blend();
+		Model::Load(Model::Result);
 
-		mesh_Test.model = glm::translate(glm::mat4(1.0f), finalPosition);
-		mesh_Test.model = glm::rotate(mesh_Test.model, glm::radians(10.f), finalRotation);
-		Model::Display(camera, basicShader, mesh_Test.model);
+		//Update Transforms
+		glm::mat4 model = glm::translate(glm::mat4(1.0f), finalPosition);
+		model = glm::rotate(model, finalRotation.x * glm::radians(1.f), glm::vec3(1.0f, 0.0f, 0.0f));
+		model = glm::rotate(model, finalRotation.y * glm::radians(1.f), glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::rotate(model, finalRotation.z * glm::radians(1.f), glm::vec3(0.0f, 0.0f, 1.0f));
+		model = glm::scale(model, finalScale);
+		
+		//UpdateShader With Camera and Light Information
+		glUniform3f(glGetUniformLocation(phongShader.ID, "LightPosition"), LightPosition.x, LightPosition.y, LightPosition.z);
+		glUniform3f(glGetUniformLocation(phongShader.ID, "LightColor"), LightColor.x, LightColor.y, LightColor.z);
+		glUniform1f(glGetUniformLocation(phongShader.ID, "LightPower"), LightPower);
+		glUniform1f(glGetUniformLocation(phongShader.ID, "AmbientPower"), AmbientPower);
+		glUniform1f(glGetUniformLocation(phongShader.ID, "DiffusePower"), DiffusePower);
 
-		ImGui::Begin("Hello");
+		glUniform3f(glGetUniformLocation(phongShader.ID, "CameraPosition"), camera.position.x, camera.position.y, camera.position.z);
+		glUniform3f(glGetUniformLocation(phongShader.ID, "Color"), finalMeshColor.x, finalMeshColor.y, finalMeshColor.z);
 
-		ImGui::BeginGroup();
-		ImGui::Text("BlendFace");
-		ImGui::DragFloat3("Position", glm::value_ptr(finalPosition),1,-1000.0f,1000.0f);
-		ImGui::DragFloat3("Scale", glm::value_ptr(finalScale),0.1,-1000.f,1000.f);
-		ImGui::DragFloat3("Rotation", glm::value_ptr(finalRotation),1,-1000.f,1000.f);
-		ImGui::EndGroup();
+		Model::Display(camera, phongShader,model);
+		
+#pragma region ImGui Window
+		//ImGui
+		ImGui::Begin("Inspector");
+
+		if (ImGui::CollapsingHeader("BlendFace")) {
+			ImGui::Spacing();
+			ImGui::Spacing();
+
+			ImGui::SeparatorText("Transform");
+			ImGui::DragFloat3("Position", glm::value_ptr(finalPosition), 1, -1000.0f, 1000.0f);
+			ImGui::DragFloat3("Scale", glm::value_ptr(finalScale), 0.1, -1000.f, 1000.f);
+			ImGui::DragFloat3("Rotation", glm::value_ptr(finalRotation), 1, -1000.f, 1000.f);
+
+			ImGui::Spacing();
+			ImGui::Spacing();
+			ImGui::Spacing();
+
+			ImGui::SeparatorText("Material");
+			ImGui::ColorEdit3("Base Color", (float*)&finalMeshColor);
+
+			ImGui::Spacing();
+			ImGui::Spacing();
+			ImGui::Spacing();
+
+			ImGui::SeparatorText("BlendShape");
+			for (int i = 0; i < Model::weights.size(); i++) {
+				ImGui::SliderFloat(label[i+1], &Model::weights[i], 0.0, 1.0);
+			}
+
+			ImGui::Spacing();
+			ImGui::Spacing();
+			ImGui::Spacing();
+		}
+
+
+		if (ImGui::CollapsingHeader("Light")) {
+			ImGui::Spacing();
+			ImGui::Spacing();
+			ImGui::SeparatorText("Basic");
+			ImGui::DragFloat3("Light Position", glm::value_ptr(LightPosition), 1, -1000.0f, 1000.0f);
+			ImGui::ColorEdit3("Color", (float*)&LightColor);
+			ImGui::DragFloat("Power", &LightPower, 0.001, 0.0f, 1.0f);
+			ImGui::Spacing();
+			ImGui::Spacing();
+
+			ImGui::DragFloat("Ambient Light", &AmbientPower, 0.001, 0.0f, 1.0f);
+			ImGui::DragFloat("Diffuse Light", &DiffusePower, 0.001, 0.0f, 1.0f);
+			ImGui::Spacing();
+			ImGui::Spacing();
+		}
+
 		ImGui::End();
-
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+#pragma endregion
 
 		glfwPollEvents();
 		glfwSwapBuffers(window);

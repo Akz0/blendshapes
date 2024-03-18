@@ -1,35 +1,61 @@
 #version 330
 
 
-in vec3 normal;
-in vec3 lightDir;
-in vec3 pos;
+in vec2 TexCord;
+in vec3 Normal;
+in vec3 CurrentPosition;
 
-float Ka, Kd, Ks;
+uniform vec3 Color;
 
-uniform vec3 objectColor;
-//vec3 objectColor = vec3(1.0, 0.8, 0.6);
-//uniform float shininess;
-float shininess = 50;
+//Camera
+uniform vec3 CameraPosition;
 
+//Light Uniforms
+uniform vec3 LightColor;
+uniform vec3 LightPosition;
+uniform float LightPower;
+
+uniform float AmbientPower;
+uniform vec4 AmbientColor;
+
+uniform float DiffusePower;
+uniform vec4 DiffuseColor;
+
+uniform float SpecularPower;
+uniform vec4 SpecularColor;
+
+uniform vec3 MeshColor;
+uniform float Roughness;
+
+out vec4 FragColor;
+
+vec4 PointLight(float power){
+	
+	vec3 LightVector = LightPosition - CurrentPosition;
+	float distance = length(LightVector);
+
+	float a = 3.1f;
+	float b = 1.2f;
+
+	float intensity = 1.0f / (a*distance*distance + b*distance + 1.0f);
+	
+	vec3 normal = normalize(Normal);
+	vec3 LightDirection = normalize(LightPosition - CurrentPosition);
+	float diffuse = max(dot(normal, LightDirection), 0.0f);
+
+	diffuse = max(diffuse,0.0);
+	
+	vec3 ViewDirection = normalize(CameraPosition - CurrentPosition);
+	vec3 ReflectionDirection = reflect(-LightDirection, normal);
+
+	vec3 halfway = normalize(ViewDirection + LightDirection);
+
+	float SpecularAmount = pow(max(dot(normal,halfway),0.0f),16);
+	float specular = SpecularAmount * SpecularPower;
+
+	return ((vec4(Color,1.0f) * (diffuse*DiffusePower + AmbientPower + intensity) + specular) * vec4(LightColor,1.0)) * power;
+}
 
 void main(){
-
-    float i_diffuse, i_specular, i_ambient;
-    vec3 n;
-    vec3 viewDir = normalize(-pos);
-    vec3 refDir = normalize(-reflect(lightDir, normal));
-
-    Ka = 0.1;
-    Ks = 0.9;
-
-    vec4 color;
-    n = normalize(normal);
-
-    i_diffuse = max(dot(lightDir, n), 0.0);
-    i_specular = max( pow( dot(refDir, viewDir), shininess), 0.0);
-    i_ambient = 1;
-
-    color = vec4(objectColor , 1.0) * i_diffuse + Ks * i_specular + i_ambient * Ka;
-    gl_FragColor = color;
+    FragColor = PointLight(LightPower);
 }

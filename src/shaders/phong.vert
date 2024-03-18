@@ -1,34 +1,27 @@
-#version 330
+#version 330 core
 
-in vec3 vertex_position;
-in vec3 vertex_normal;
+layout (location = 0) in vec3 aPos;
+layout (location = 1) in vec3 aNormal;
+layout (location = 2) in vec2 aTexCords;
+layout (location = 3) in vec3 aTangent;
+layout (location = 4) in vec3 aBiTangent;
 
-out vec3 normal;
-out vec3 lightDir;
-out vec3 pos;
-
-vec3 LightPosition = vec3 (7.0, 10.0, 20.0); // Light position in world coords.
-vec3 Kd = vec3 (0.0, 0.0, 1.0); // blue diffuse surface reflectance
-vec3 Ld = vec3 (1.0, 1.0, 1.0); // Light source intensity
-
-uniform mat4 view;
-uniform mat4 proj;
 uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
 
+out vec3 CurrentPosition;
+out vec3 Normal;
+out vec2 TexCord;
 
-void main(){
+void main()
+{
+    gl_Position =  projection * view * model * vec4(aPos, 1.0);
 
-	
-	mat4 ModelViewMatrix = view * model;
-	mat3 NormalMatrix =  mat3(ModelViewMatrix);
-
-	vec4 vertPos4 = ModelViewMatrix * vec4(vertex_position, 1.0);
-	pos = vec3(vertPos4) / vertPos4.w;
-
-	lightDir = normalize(vec3(LightPosition - pos));
-
-	normal = normalize( NormalMatrix * vertex_normal);
-
-	gl_Position = proj * view * model * vec4(vertex_position,1.0);
-
+	CurrentPosition = vec3(model * vec4(aPos,1.0f));
+    Normal = mat3(transpose(inverse(model))) * aNormal;
+    TexCord = aTexCords;
 }
+
+
+

@@ -1880,7 +1880,7 @@ static void ShowDemoWindowWidgets()
             if (progress >= +1.1f) { progress = +1.1f; progress_dir *= -1.0f; }
             if (progress <= -0.1f) { progress = -0.1f; progress_dir *= -1.0f; }
         }
-
+                    
         // Typically we would use ImVec2(-1.0f,0.0f) or ImVec2(-FLT_MIN,0.0f) to use all available width,
         // or ImVec2(width,0.0f) for a specified width. ImVec2(0.0f,0.0f) uses ItemWidth.
         ImGui::ProgressBar(progress, ImVec2(0.0f, 0.0f));
