@@ -128,7 +128,6 @@ public:
     static void Load(Mesh mesh);
     static void Display(Camera camera,Shader shader, glm::mat4 model);
     static void Blend();
-    static void Animate();
 };
 
 #endif // !MODEL_CLASS

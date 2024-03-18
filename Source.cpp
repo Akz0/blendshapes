@@ -169,6 +169,10 @@ int main(void) {
 	static float AmbientPower = 0.2f;
 	static float DiffusePower = 0.2f;
 
+	//
+	bool isAnimate = false;
+	int lineNumber = 0;
+
 #pragma endregion
 
 	while (!glfwWindowShouldClose(window))
@@ -197,9 +201,6 @@ int main(void) {
 #pragma endregion
 
 		processInput(window);
-		Model::Blend();
-		Model::Load(Model::Result);
-
 		//Update Transforms
 		glm::mat4 model = glm::translate(glm::mat4(1.0f), finalPosition);
 		model = glm::rotate(model, finalRotation.x * glm::radians(1.f), glm::vec3(1.0f, 0.0f, 0.0f));
@@ -217,7 +218,53 @@ int main(void) {
 		glUniform3f(glGetUniformLocation(phongShader.ID, "CameraPosition"), camera.position.x, camera.position.y, camera.position.z);
 		glUniform3f(glGetUniformLocation(phongShader.ID, "Color"), finalMeshColor.x, finalMeshColor.y, finalMeshColor.z);
 
+
+#pragma region Animate Shapes
+
+		if (isAnimate && lineNumber < 6000) {
+				Model::weights[0] = Model::animation_data[lineNumber];
+				Model::weights[1] = Model::animation_data[lineNumber + 1];
+				Model::weights[2] = Model::animation_data[lineNumber + 2];
+				Model::weights[3] = Model::animation_data[lineNumber + 3];
+				Model::weights[4] = Model::animation_data[lineNumber + 4];
+				Model::weights[5] = Model::animation_data[lineNumber + 5];
+				Model::weights[6] = Model::animation_data[lineNumber + 6];
+				Model::weights[7] = Model::animation_data[lineNumber + 7];
+				Model::weights[8] = Model::animation_data[lineNumber + 8];
+				Model::weights[9] = Model::animation_data[lineNumber + 9];
+				Model::weights[10] = Model::animation_data[lineNumber + 10];
+				Model::weights[11] = Model::animation_data[lineNumber + 11];
+				Model::weights[12] = Model::animation_data[lineNumber + 12];
+				Model::weights[13] = Model::animation_data[lineNumber + 13];
+				Model::weights[14] = Model::animation_data[lineNumber + 14];
+				Model::weights[15] = Model::animation_data[lineNumber + 15];
+				Model::weights[16] = Model::animation_data[lineNumber + 16];
+
+				Model::weights[17] = Model::animation_data[lineNumber + 17];
+				Model::weights[18] = Model::animation_data[lineNumber + 18];
+				Model::weights[19] = Model::animation_data[lineNumber + 19];
+				Model::weights[20] = Model::animation_data[lineNumber + 20];
+				Model::weights[21] = Model::animation_data[lineNumber + 21];
+				Model::weights[22] = Model::animation_data[lineNumber + 22];
+				Model::weights[23] = Model::animation_data[lineNumber + 23];
+
+				std::cout << "Line Number : " << lineNumber << std::endl;
+				lineNumber += 24; 
+
+		}
+
+		if (lineNumber > 6000) {
+			isAnimate = false;
+			lineNumber = 0;
+		}
+
+#pragma endregion
+
+		Model::Blend();
+		Model::Load(Model::Result);
 		Model::Display(camera, phongShader,model);
+
+		if (isAnimate) { Sleep(50); }
 		
 #pragma region ImGui Window
 		//ImGui
@@ -244,10 +291,28 @@ int main(void) {
 			ImGui::Spacing();
 
 			ImGui::SeparatorText("BlendShape");
+
 			for (int i = 0; i < Model::weights.size(); i++) {
 				ImGui::SliderFloat(label[i+1], &Model::weights[i], 0.0, 1.0);
 			}
+			ImGui::Spacing();
+			ImGui::Spacing();
+			ImGui::Spacing();
 
+			ImGui::Text("Animation");
+			ImGui::SameLine();
+			if (isAnimate) {
+				ImGui::ColorButton("AnimationID", ImVec4(0.0, 1.0, 0.0, 1.0));
+			}
+			else {
+				ImGui::ColorButton("AnimationID", ImVec4(1.0, 0.0, 0.0, 1.0));
+			}
+
+			if (ImGui::Button("Animate")) {
+				isAnimate = !isAnimate;
+			}
+			
+			
 			ImGui::Spacing();
 			ImGui::Spacing();
 			ImGui::Spacing();
@@ -344,3 +409,10 @@ void processInput(GLFWwindow* window)
 }
 
 
+
+void AnimateFace(GLFWwindow* window) {
+
+	
+
+
+}

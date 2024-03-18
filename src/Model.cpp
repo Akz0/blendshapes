@@ -158,9 +158,15 @@ void Model::Display(Camera camera,Shader shader,glm::mat4 model) {
 
 void Model::Initialize() {
 
-    std::ifstream AnimationFile("./animation-data.txt");
+    std::ifstream AnimationFile("./src/animation-data.txt");
+    if (!AnimationFile.is_open()) {
+        std::cerr << "Error opening Animation File!" << std::endl;
+    }
+
     for (int i = 0; i < 6000; i++) {
-        AnimationFile >> animation_data[i];
+        if (!(AnimationFile >> animation_data[i])) {
+            std::cerr << "Error reading data from Animation file!" << std::endl;
+        }
     }
 
     F0.conservativeResize(BlendShapes[0].VertexData.size(), 1);
@@ -199,41 +205,5 @@ void Model::Blend() {
             total += B_w(i, j); 
         }
         Result.VertexData(i, 0) = F0(i, 0) + total; 
-    }
-}
-
-
-
-void Model::Animate() {
-    int lineNumber = 0;
-
-    while (lineNumber < 6000) {
-         
-        weights[0] = animation_data[lineNumber];
-        weights[1] = animation_data[lineNumber + 1];
-        weights[2] = animation_data[lineNumber + 2];
-        weights[3] = animation_data[lineNumber + 3];
-        weights[4] = animation_data[lineNumber + 4];
-        weights[5] = animation_data[lineNumber + 5];
-        weights[6] = animation_data[lineNumber + 6];
-        weights[7] = animation_data[lineNumber + 7];
-        weights[8] = animation_data[lineNumber + 8];
-        weights[9] = animation_data[lineNumber + 9];
-        weights[10] = animation_data[lineNumber + 10];
-        weights[11] = animation_data[lineNumber + 11];
-        weights[12] = animation_data[lineNumber + 12];
-        weights[13] = animation_data[lineNumber + 13];
-        weights[14] = animation_data[lineNumber + 14];
-        weights[15] = animation_data[lineNumber + 15];
-        weights[16] = animation_data[lineNumber + 16];
-        weights[17] = animation_data[lineNumber + 17];
-        weights[18] = animation_data[lineNumber + 18];
-        weights[19] = animation_data[lineNumber + 19];
-        weights[20] = animation_data[lineNumber + 20];
-        weights[21] = animation_data[lineNumber + 21];
-        weights[22] = animation_data[lineNumber + 22];
-        weights[23] = animation_data[lineNumber + 23];
-
-        Blend();
     }
 }
