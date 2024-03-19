@@ -1,6 +1,4 @@
-#include "imGui/imgui.h"
-#include "imGui/imgui_impl_glfw.h"
-#include "imGui/imgui_impl_opengl3.h"
+
 
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
@@ -25,6 +23,7 @@
 #include <glm/gtx/norm.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtx/vector_angle.hpp>
+#include "glm/ext.hpp"
 
 #include <iostream>
 #include <string>
@@ -40,15 +39,12 @@
 
 #include "src/Shader.h"
 #include "src/Model.h"
+#include "src/Utilities.h"
+#include "src/Manipulator.h"
+
+#include <limits>
 
 
-
-
-
-double lastFrameTime = glfwGetTime();
-double currentTime;
-float deltaTime = currentTime - lastFrameTime;
-int frameCount = 0;
 
 GLFWwindow* window;
 void WindowResizingHandler(GLFWwindow* window, int width, int height);
@@ -57,8 +53,22 @@ void MouseButtonHandler(GLFWwindow* window, int button, int action, int mods);
 void MouseHandler(GLFWwindow* window, double xposIn, double yposIn);
 void processInput(GLFWwindow* window);
 
+
+double lastFrameTime = glfwGetTime();
+double currentTime;
+float deltaTime = currentTime - lastFrameTime;
+int frameCount = 0;
+
+
+
+
+
+
 Camera camera;
 Mouse mouse;
+glm::mat4 model;
+
+
 
 const char* label[] = {
 	"NEUTRAL", "JAW_OPEN", "KISS", "L_BROW_LOWER", "L_BROW_NARROW",
@@ -68,6 +78,12 @@ const char* label[] = {
 	"R_LOWER_O", "R_UPPER_O", "R_NOSE_WRINKLE", "R_PUFF", "R_SAD",
 	"R_SMILE", "R_SUCK"
 };
+
+//const char* label[] = {
+//	"NEUTRAL", "JAW_OPEN", "KISS",
+//	"LEFT_CLOSED",  "L_SMILE", "L_PUFF", "L_SAD",
+//	"RIGHT_CLOSED", "R_PUFF", "R_SAD", "R_SMILE",
+//};
 
 const char* TestLabel[] = {
 	"Basic","Smooth Vertex","Sphere"
@@ -104,6 +120,16 @@ void LoadHighResFace() {
 	Mesh Neutral(NEUTRAL);
 	Mesh JawOpen(JAW_OPEN);
 	Mesh Kiss(KISS);
+
+	Mesh LClosed(LEFT_CLOSED);
+	Mesh LSmile(L_SMILE);
+	Mesh LPuff(L_PUFF);
+	Mesh LSad(L_SAD);
+
+	Mesh RClosed(RIGHT_CLOSED);
+	Mesh RSmile(R_SMILE);
+	Mesh RPuff(R_PUFF);
+	Mesh RSad(R_SAD);
 }
 void LoadTestModels() {
 	Mesh Key1("./src/test-model/Basis.obj");
@@ -111,7 +137,6 @@ void LoadTestModels() {
 	Mesh Key3("./src/test-model/Circle.obj");
 }
 int main(void) {
-	//Window Creation
 	if (!glfwInit())
 	{
 		std::cerr << "Failed to initialize GLFW" << std::endl;
@@ -130,6 +155,7 @@ int main(void) {
 
 	glfwSetWindowSizeCallback(window, WindowResizingHandler);
 	glfwSetCursorPosCallback(window, MouseHandler);
+	glfwSetMouseButtonCallback(window, MouseButtonHandler);
 
 	if (glewInit())
 	{
@@ -155,16 +181,17 @@ int main(void) {
 	//LoadHighResFace();
 	LoadLowResFace();
 	Model::Initialize();
+	Manipulator::ManipulatorInitialize();
 
 #pragma region Inspector Controls
-	glm::vec3 finalPosition(0.0,0.0,-60.0f);
+	glm::vec3 finalPosition(0.0,0.0,0.0f);
 	glm::vec3 finalScale(1.0f);
 	glm::vec3 finalRotation(0.0f);
 	static ImVec4 finalMeshColor = ImVec4(1.0f, 0.0f, 0.0f, 1.0f); 
 
 	//Light Information
 	static ImVec4 LightColor = ImVec4(1.0, 1.0, 1.0, 1.0);
-	glm::vec3 LightPosition(0.0, 3.0, -3.0);
+	glm::vec3 LightPosition(0.0, 200.0, 75.0);
 	static float LightPower = 1.0f;
 	static float AmbientPower = 0.2f;
 	static float DiffusePower = 0.2f;
@@ -201,8 +228,11 @@ int main(void) {
 #pragma endregion
 
 		processInput(window);
+		phongShader.Activate();
+
+#pragma region Set Uniforms
 		//Update Transforms
-		glm::mat4 model = glm::translate(glm::mat4(1.0f), finalPosition);
+		model = glm::translate(glm::mat4(1.0f), finalPosition);
 		model = glm::rotate(model, finalRotation.x * glm::radians(1.f), glm::vec3(1.0f, 0.0f, 0.0f));
 		model = glm::rotate(model, finalRotation.y * glm::radians(1.f), glm::vec3(0.0f, 1.0f, 0.0f));
 		model = glm::rotate(model, finalRotation.z * glm::radians(1.f), glm::vec3(0.0f, 0.0f, 1.0f));
@@ -217,7 +247,7 @@ int main(void) {
 
 		glUniform3f(glGetUniformLocation(phongShader.ID, "CameraPosition"), camera.position.x, camera.position.y, camera.position.z);
 		glUniform3f(glGetUniformLocation(phongShader.ID, "Color"), finalMeshColor.x, finalMeshColor.y, finalMeshColor.z);
-
+#pragma endregion
 
 #pragma region Animate Shapes
 
@@ -266,6 +296,8 @@ int main(void) {
 
 		if (isAnimate) { Sleep(50); }
 		
+		Manipulator::DrawPickers(phongShader);
+
 #pragma region ImGui Window
 		//ImGui
 		ImGui::Begin("Inspector");
@@ -312,7 +344,6 @@ int main(void) {
 				isAnimate = !isAnimate;
 			}
 			
-			
 			ImGui::Spacing();
 			ImGui::Spacing();
 			ImGui::Spacing();
@@ -350,6 +381,22 @@ int main(void) {
 
 	glfwDestroyWindow(window);
 	glfwTerminate();
+}
+
+void MouseButtonHandler(GLFWwindow* window, int button, int action, int mods) {
+		
+	if (Manipulator::Pickers.size() > 0) {
+		if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+			Manipulator::MoveStart(mouse.x, mouse.y);
+		}
+		if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE) {
+			Manipulator::MoveComplete(mouse.x, mouse.y);
+			Model::DirectManipulation();
+		}
+	}
+	if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
+		Manipulator::ManipulatorCreator(mouse.x, mouse.y);
+	}
 }
 
 
@@ -409,10 +456,164 @@ void processInput(GLFWwindow* window)
 }
 
 
+glm::vec3 ScreenToWorld(int mouseX, int mouseY) {
+	float x = (2.0f * mouseX) / WINDOW_WIDTH - 1.0f;
+	float y = 1.0f - (2.0f * mouseY) / WINDOW_HEIGHT;
+	glm::vec4 rayClip = glm::vec4(x, y, -1.0, 1.0);
 
-void AnimateFace(GLFWwindow* window) {
+	glm::vec4 rayEye = glm::inverse(camera.projection) * rayClip;
+	rayEye = glm::vec4(rayEye.x, rayEye.y, -1.0, 0.0);
 
+	glm::vec3 rayWorld = glm::vec3(glm::inverse(camera.view) * rayEye);
+	rayWorld = glm::normalize(rayWorld);
+	return rayWorld;
+}
+float DistancePointToRay(glm::vec3 point, glm::vec3 rayOrigin, glm::vec3 rayDirection) {
+	glm::vec3 p1 = point;
+	glm::vec3 p2 = rayOrigin;
+	glm::vec3 p3 = rayOrigin + rayDirection;
+
+	float dist = glm::length(glm::cross(p1 - p2, p1 - p3)) / glm::length(p3 - p2);
+	return dist;
+}
+
+void Manipulator::MoveStart(int mouseX,int mouseY) {
 	
+	glm::vec3 ray = ScreenToWorld(mouseX, mouseY);
+	float closestDistance = (std::numeric_limits<float>::max)();
+	GLuint ClosestPickerIndex = -1;
+
+	for (int i = 0; i < Manipulator::Pickers.size(); i++) {
+		float distance = DistancePointToRay(Manipulator::Pickers[i].position, camera.position,ray);
+		if (distance < closestDistance) {
+			closestDistance = distance;
+			ClosestPickerIndex = i;
+		}
+	}
+
+	glm::vec3 picker = Manipulator::Pickers[ClosestPickerIndex].position;
+	Manipulator::CurrentPicker = ClosestPickerIndex;
+	
+	int m0_resize = (Model::constraints_m0.size() * 3);
+	int m0_x = 3 * Manipulator::CurrentPicker;
+	int m0_y = 3 * Manipulator::CurrentPicker + 1;
+	int m0_z = 3 * Manipulator::CurrentPicker + 2;
+
+	Model::m0.conservativeResize(m0_resize, 1);
+
+	Model::m0(m0_x, 0) = picker.x;
+	Model::m0(m0_y, 0) = picker.y;
+	Model::m0(m0_z, 0) = picker.z;
+}
 
 
+void Manipulator::MoveComplete(int mouseX, int mouseY) {
+	glm::vec3 ray = ScreenToWorld(mouseX, mouseY);
+
+	int m_resize = (Model::constraints_m.size() * 3);
+	int m_x = 3 * Manipulator::CurrentPicker;
+	int m_y = 3 * Manipulator::CurrentPicker + 1;
+	int m_z = 3 * Manipulator::CurrentPicker + 2;
+
+	Model::m.conservativeResize(m_resize, 1);
+	Model::B_Bar.conservativeResize(Model::m.rows(), Model::B_Delta.cols());
+
+	float closestDistance = (std::numeric_limits<float>::max)();
+	GLuint ClosestMeshIndex = -1;
+	GLuint ClosestVertexIndex = -1;
+
+	for (int i = 1; i < Model::BlendShapes.size(); i++) {
+		for (int j = 0; j < Model::Result.vertices.size(); j++) {
+			float distance = DistancePointToRay(Model::BlendShapes[i].vertices[j], camera.position, ray);
+			if (distance < closestDistance) {
+				closestDistance = distance;
+				ClosestMeshIndex = i;
+				ClosestVertexIndex = j;
+			}
+		}
+	}
+
+	glm::vec3 ClosestVertex = Model::BlendShapes[ClosestMeshIndex].vertices[ClosestVertexIndex];
+	Manipulator::Pickers[Manipulator::CurrentPicker].position = ClosestVertex;
+	Model::m.conservativeResize(m_resize, 1);
+
+	Model::m(m_x, 0) = ClosestVertex.x;
+	Model::m(m_y, 0) = ClosestVertex.y;
+	Model::m(m_z, 0) = ClosestVertex.z;
+	Model::B_Bar.conservativeResize(Model::m.rows(), Model::B_Delta.cols());
+
+	for (int i = 0; i < Model::B_Delta.cols(); i++) {
+		Model::B_Bar(m_x, i) = Model::B_Delta(ClosestVertexIndex * 3, i);
+		Model::B_Bar(m_y, i) = Model::B_Delta(ClosestVertexIndex * 3 + 1, i);
+		Model::B_Bar(m_z, i) = Model::B_Delta(ClosestVertexIndex * 3 + 2, i);
+	}
+}
+
+void Manipulator::ManipulatorCreator(int mouseX, int mouseY) {
+	glm::vec3 ray = ScreenToWorld(mouseX, mouseY);
+	float closestDistance = (std::numeric_limits<float>::max)();
+
+	GLuint ClosestMeshIndex = -1;
+	GLuint ClosestVertexIndex = -1;
+
+	for (int i = 1; i < Model::BlendShapes.size(); i++) {
+		for (int j = 0; j < Model::Result.vertices.size(); j++) {
+			float distance = DistancePointToRay(Model::BlendShapes[i].vertices[j], camera.position, ray);
+			if (distance < closestDistance) {
+				closestDistance = distance;
+				ClosestMeshIndex = i;
+				ClosestVertexIndex = j;
+			}
+		}
+	}
+
+	glm::vec3 ClosestVertex = Model::BlendShapes[ClosestMeshIndex].vertices[ClosestVertexIndex];
+	Manipulator::Pickers.push_back(Manipulator(ClosestVertex, ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ClosestVertexIndex));
+	Model::constraints_m0.push_back(ClosestVertexIndex);
+	Model::constraints_m.push_back(ClosestVertexIndex);
+}
+
+void Model::DirectManipulation() {
+
+	float alpha = 0.1f;
+	float u = 0.001f;
+
+	Eigen::VectorXf PreviousWeights = weights * (alpha);
+	Eigen::MatrixXf Identity(Model::BlendShapes.size()-1, Model::BlendShapes.size() - 1);
+	for (int i = 0; i < Model::BlendShapes.size() - 1; i++) {
+		for (int j = 0; j < Model::BlendShapes.size() - 1; j++) {
+			if (i == j) {
+				Identity(i, j) = 1.0f;
+			}
+			else {
+				Identity(i, j) = 0.0f;
+			}
+		}
+	}
+
+	Eigen::MatrixXf B_Transpose = B_Bar.transpose();
+	Eigen::MatrixXf BtB = B_Transpose * B_Bar;
+	Eigen::MatrixXf Left_Side = (BtB + (Identity * (alpha + u)));
+
+	Eigen::VectorXf M_M0 = m - m0;
+	Eigen::MatrixXf Right_Side = (B_Transpose * M_M0);
+	Right_Side = Right_Side + PreviousWeights;
+
+	Eigen::LDLT<Eigen::MatrixXf> solver(Left_Side);
+	Eigen::VectorXf NewWeights = solver.solve(Right_Side);
+
+
+	for (int i = 0; i < 24; i++) {
+
+		if (NewWeights(i, 0) > 1) {
+			NewWeights(i, 0) = 1;
+		}
+		if (NewWeights(i, 0) < 0) {
+			NewWeights(i, 0) = 0;
+
+		}
+
+	}
+
+	Model::weights = NewWeights;
 }

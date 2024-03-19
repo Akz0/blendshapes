@@ -4,6 +4,10 @@
 #define WINDOW_WIDTH 1920
 #define WINDOW_HEIGHT 1080
 
+
+#include "Model.h"
+#include "Shader.h"
+
 struct Camera {
 	glm::vec3 position;
 	glm::vec3 target;
@@ -17,7 +21,7 @@ struct Camera {
 	float yaw;
 
 	Camera()
-		: position(glm::vec3(0.0f, 0.0f, 2.0f)),
+		: position(glm::vec3(0.0f, 15.0f, 40.0f)),
 		target(glm::vec3(0.0f, 0.0f, 0.0f)),
 		up(glm::vec3(0.0f, 1.0f, 0.0f)),
 		front(glm::vec3(0.0f, 0.0f, -1.0f)),
@@ -42,6 +46,7 @@ struct Mouse {
 		x(0.f), y(0.f), sensitivity(100.0f)
 	{}
 };
+
 
 
 #endif // !UTILITIES_CLASS_H

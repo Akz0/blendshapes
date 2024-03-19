@@ -51,6 +51,9 @@
     <ClCompile Include="include\imgui\imgui_demo.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\Manipulator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\imgui\imconfig.h">
@@ -1875,6 +1878,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Utilities.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Manipulator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

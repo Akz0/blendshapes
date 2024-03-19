@@ -28,6 +28,7 @@
     <ClCompile Include="include\imgui\imgui_impl_opengl3.cpp" />
     <ClCompile Include="include\imgui\imgui_tables.cpp" />
     <ClCompile Include="include\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="src\Manipulator.cpp" />
     <ClCompile Include="src\Model.cpp" />
     <ClCompile Include="src\Shader.cpp" />
     <ClCompile Include="Source.cpp" />
@@ -638,6 +639,7 @@
     <ClInclude Include="include\imgui\imstb_textedit.h" />
     <ClInclude Include="include\imgui\imstb_truetype.h" />
     <ClInclude Include="include\stb\stb_image.h" />
+    <ClInclude Include="src\Manipulator.h" />
     <ClInclude Include="src\Model.h" />
     <ClInclude Include="src\Shader.h" />
     <ClInclude Include="src\Utilities.h" />

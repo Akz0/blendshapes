@@ -43,7 +43,7 @@
 #define R_BROW_LOWER "./src/model/Mery_r_brow_lower.obj"                //            Weight Index: 13
 #define R_BROW_NARROW "./src/model/Mery_r_brow_narrow.obj"              //            Weight Index: 14
 #define R_BROW_RAISE "./src/model/Mery_r_brow_raise.obj"                //            Weight Index: 15
-#define REFT_CLOSED "./src/model/Mery_r_eye_closed.obj"                 //             Weight Index: 16
+#define RIGHT_CLOSED "./src/model/Mery_r_eye_closed.obj"                 //             Weight Index: 16
 #define R_LOWER_O "./src/model/Mery_r_eye_lower_open.obj"               //           Weight Index: 17
 #define R_UPPER_O "./src/model/Mery_r_eye_upper_open.obj"               //           Weight Index: 18
 #define R_NOSE_WRINKLE "./src/model/Mery_r_nose_wrinkle.obj"            //           Weight Index: 19
@@ -128,6 +128,8 @@ public:
     static void Load(Mesh mesh);
     static void Display(Camera camera,Shader shader, glm::mat4 model);
     static void Blend();
+    static void DirectManipulation();
 };
 
 #endif // !MODEL_CLASS
+

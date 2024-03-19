@@ -65,13 +65,11 @@ void Mesh::CreateMesh(const char* fileName) {
             }
         }
     }
-
-    Model::BlendShapes.push_back(*this);
-
+    
+    if (std::strstr(fileName, "picker") == nullptr) { Model::BlendShapes.push_back(*this); }
     aiReleaseImport(scene);
     return;
 }
-
 
 void Model::Load(Mesh mesh) {
     GLuint aPos = 0;
@@ -143,7 +141,6 @@ void Model::Load(Mesh mesh) {
     }
 }
 
-
 void Model::Display(Camera camera,Shader shader,glm::mat4 model) {
     shader.Activate();
 
@@ -154,7 +151,6 @@ void Model::Display(Camera camera,Shader shader,glm::mat4 model) {
     glBindVertexArray(ResultVAO);
     glDrawArrays(GL_TRIANGLES, 0, Result.totalPoints);
 }
-
 
 void Model::Initialize() {
 
