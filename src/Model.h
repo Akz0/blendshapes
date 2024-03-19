@@ -94,7 +94,7 @@ public:
     std::vector<glm::vec3> tangents;
     std::vector<glm::vec3> biTangents;
 
-    Eigen::VectorXf VertexData;
+    std::vector<float> VertexData;
 
     glm::mat4 model;
 
@@ -107,20 +107,20 @@ class Model
 {
 public:
     static std::vector<Mesh> BlendShapes;
-    static Eigen::VectorXf weights;
-    static Eigen::MatrixXf B_Delta;
-    static Eigen::MatrixXf B_w;
-    static Eigen::MatrixXf B_Bar;
-    static Eigen::VectorXf F0;
-    static Eigen::VectorXf F;
+    static std::vector<float> weights;
+    static std::vector<float> P_weights;
+    static std::vector<std::vector<float>> B_Delta;
+    static std::vector<std::vector<float>> B_w;
+    static std::vector<float> F0;
+
     static Mesh Result;
     static GLuint ResultVAO;
 
+    static Eigen::MatrixXf B_Bar;
     static std::vector<GLuint> constraints_m0;
     static std::vector<GLuint> constraints_m;
     static Eigen::VectorXf m0;
     static Eigen::VectorXf m;
-
 
     static double animation_data[6000];
     

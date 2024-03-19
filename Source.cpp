@@ -44,7 +44,7 @@
 
 #include <limits>
 
-
+std::vector<float> MultiplyScalar(std::vector<float> vec, float num);
 
 GLFWwindow* window;
 void WindowResizingHandler(GLFWwindow* window, int width, int height);
@@ -120,16 +120,28 @@ void LoadHighResFace() {
 	Mesh Neutral(NEUTRAL);
 	Mesh JawOpen(JAW_OPEN);
 	Mesh Kiss(KISS);
-
-	Mesh LClosed(LEFT_CLOSED);
-	Mesh LSmile(L_SMILE);
+	Mesh LBrowLower(L_BROW_LOWER);
+	Mesh LBrowNarrow(L_BROW_NARROW);
+	Mesh LBrowRaise(L_BROW_RAISE);
+	Mesh LeftClosed(LEFT_CLOSED);
+	Mesh LLowerOpen(L_LOWER_O);
+	Mesh LUpperOpen(L_UPPER_O);
+	Mesh LNoseWrinkle(L_NOSE_WRINKLE);
 	Mesh LPuff(L_PUFF);
 	Mesh LSad(L_SAD);
-
-	Mesh RClosed(RIGHT_CLOSED);
-	Mesh RSmile(R_SMILE);
+	Mesh LSmile(L_SMILE);
+	Mesh LSuck(L_SUCK);
+	Mesh RBrowLower(R_BROW_LOWER);
+	Mesh RBrowNarrow(R_BROW_NARROW);
+	Mesh RBrowRaise(R_BROW_RAISE);
+	Mesh RightClosed(RIGHT_CLOSED);
+	Mesh RLowerOpen(R_LOWER_O);
+	Mesh RUpperOpen(R_UPPER_O);
+	Mesh RNoseWrinkle(R_NOSE_WRINKLE);
 	Mesh RPuff(R_PUFF);
 	Mesh RSad(R_SAD);
+	Mesh RSmile(R_SMILE);
+	Mesh RSuck(R_SUCK);
 }
 void LoadTestModels() {
 	Mesh Key1("./src/test-model/Basis.obj");
@@ -506,7 +518,6 @@ void Manipulator::MoveStart(int mouseX,int mouseY) {
 	Model::m0(m0_z, 0) = picker.z;
 }
 
-
 void Manipulator::MoveComplete(int mouseX, int mouseY) {
 	glm::vec3 ray = ScreenToWorld(mouseX, mouseY);
 
@@ -516,7 +527,7 @@ void Manipulator::MoveComplete(int mouseX, int mouseY) {
 	int m_z = 3 * Manipulator::CurrentPicker + 2;
 
 	Model::m.conservativeResize(m_resize, 1);
-	Model::B_Bar.conservativeResize(Model::m.rows(), Model::B_Delta.cols());
+	Model::B_Bar.conservativeResize(Model::m.rows(), Model::B_Delta[0].size());
 
 	float closestDistance = (std::numeric_limits<float>::max)();
 	GLuint ClosestMeshIndex = -1;
@@ -540,12 +551,12 @@ void Manipulator::MoveComplete(int mouseX, int mouseY) {
 	Model::m(m_x, 0) = ClosestVertex.x;
 	Model::m(m_y, 0) = ClosestVertex.y;
 	Model::m(m_z, 0) = ClosestVertex.z;
-	Model::B_Bar.conservativeResize(Model::m.rows(), Model::B_Delta.cols());
+	Model::B_Bar.conservativeResize(Model::m.rows(), Model::B_Delta[0].size());
 
-	for (int i = 0; i < Model::B_Delta.cols(); i++) {
-		Model::B_Bar(m_x, i) = Model::B_Delta(ClosestVertexIndex * 3, i);
-		Model::B_Bar(m_y, i) = Model::B_Delta(ClosestVertexIndex * 3 + 1, i);
-		Model::B_Bar(m_z, i) = Model::B_Delta(ClosestVertexIndex * 3 + 2, i);
+	for (int i = 0; i < Model::B_Delta[0].size(); i++) {
+		Model::B_Bar(m_x, i) = Model::B_Delta[ClosestVertexIndex * 3][i];
+		Model::B_Bar(m_y, i) = Model::B_Delta[ClosestVertexIndex * 3 + 1][i];
+		Model::B_Bar(m_z, i) = Model::B_Delta[ClosestVertexIndex * 3 + 2][i];
 	}
 }
 
@@ -577,9 +588,13 @@ void Model::DirectManipulation() {
 
 	float alpha = 0.1f;
 	float u = 0.001f;
+	
+	std::vector<float> PreviousWeights = MultiplyScalar(weights,alpha);
 
-	Eigen::VectorXf PreviousWeights = weights * (alpha);
+	const int size = Model::BlendShapes.size() - 1;
+
 	Eigen::MatrixXf Identity(Model::BlendShapes.size()-1, Model::BlendShapes.size() - 1);
+
 	for (int i = 0; i < Model::BlendShapes.size() - 1; i++) {
 		for (int j = 0; j < Model::BlendShapes.size() - 1; j++) {
 			if (i == j) {
@@ -597,7 +612,10 @@ void Model::DirectManipulation() {
 
 	Eigen::VectorXf M_M0 = m - m0;
 	Eigen::MatrixXf Right_Side = (B_Transpose * M_M0);
-	Right_Side = Right_Side + PreviousWeights;
+
+	for (int i = 0; i < Right_Side.rows(); i++) {
+		Right_Side(i, 0) = Right_Side(i, 0) + PreviousWeights[i];
+	}
 
 	Eigen::LDLT<Eigen::MatrixXf> solver(Left_Side);
 	Eigen::VectorXf NewWeights = solver.solve(Right_Side);
@@ -615,5 +633,20 @@ void Model::DirectManipulation() {
 
 	}
 
-	Model::weights = NewWeights;
+	std::vector<float> newWeight;
+	for (int i = 0; i < NewWeights.rows(); i++) {
+		newWeight.push_back(NewWeights(i, 0));
+	}
+
+	Model::weights = newWeight;
+}
+
+std::vector<float> MultiplyScalar(std::vector<float> vec, float num) {
+	std::vector<float> result;
+
+	for (int i = 0; i < vec.size(); i++) {
+		result.push_back(vec[i] * num);
+	}
+
+	return result;
 }

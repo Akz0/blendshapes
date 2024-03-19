@@ -1,11 +1,12 @@
 #include "Model.h"
 
 std::vector<Mesh> Model::BlendShapes;
-Eigen::VectorXf Model::weights;
-Eigen::MatrixXf Model::B_Delta;
-Eigen::MatrixXf Model::B_w;
+std::vector<float>  Model::weights;
+std::vector<float>  Model::P_weights;
+std::vector<std::vector<float>> Model::B_Delta;
+std::vector<std::vector<float>> Model::B_w;
 Eigen::MatrixXf Model::B_Bar;
-Eigen::VectorXf Model::F0;
+std::vector<float>  Model::F0;
 Eigen::VectorXf Model::F;
 Mesh Model::Result;
 GLuint Model::ResultVAO;
@@ -42,10 +43,10 @@ void Mesh::CreateMesh(const char* fileName) {
             if (mesh->HasPositions()) {
                 const aiVector3D* vertex = &(mesh->mVertices[v_i]);
                 vertices.push_back(glm::vec3(vertex->x, vertex->y, vertex->z));
-                VertexData.conservativeResize(vertices.size() * 3, 1);
-                VertexData(3 * vertices.size() - 3) = vertex->x;
-                VertexData(3 * vertices.size() - 2) = vertex->y;
-                VertexData(3 * vertices.size() - 1) = vertex->z;
+                
+                VertexData.push_back(vertex->x);
+                VertexData.push_back(vertex->y);
+                VertexData.push_back(vertex->z);
             }
             if (mesh->HasNormals()) {
                 const aiVector3D* normal = &(mesh->mNormals[v_i]);
@@ -86,28 +87,13 @@ void Model::Load(Mesh mesh) {
 
     glGenBuffers(1, &aPosVBO);
     glBindBuffer(GL_ARRAY_BUFFER, aPosVBO);
-    glBufferData(GL_ARRAY_BUFFER, 3 * mesh.totalPoints * sizeof(float), mesh.VertexData.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, mesh.VertexData.size() * sizeof(float), mesh.VertexData.data(), GL_STATIC_DRAW);
 
     glGenBuffers(1, &aNormalVBO);
     glBindBuffer(GL_ARRAY_BUFFER, aNormalVBO);
     glBufferData(GL_ARRAY_BUFFER, 3 * mesh.totalPoints * sizeof(float), &mesh.normals[0], GL_STATIC_DRAW);
 
-    if (mesh.textureCoords.size() > 0) {
-        glGenBuffers(1, &aTexCordsVBO);
-        glBindBuffer(GL_ARRAY_BUFFER, aTexCordsVBO);
-        glBufferData(GL_ARRAY_BUFFER, 3 * mesh.totalPoints * sizeof(float), &mesh.textureCoords[0], GL_STATIC_DRAW);
-    }
-    if (mesh.tangents.size() > 0) {
-        glGenBuffers(1, &aTangentVBO);
-        glBindBuffer(GL_ARRAY_BUFFER, aTangentVBO);
-        glBufferData(GL_ARRAY_BUFFER, 3 * mesh.totalPoints * sizeof(float), &mesh.tangents[0], GL_STATIC_DRAW);
-    }
-    
-    if (mesh.biTangents.size() > 0) {
-        glGenBuffers(1, &aBiTangentVBO);
-        glBindBuffer(GL_ARRAY_BUFFER, aBiTangentVBO);
-        glBufferData(GL_ARRAY_BUFFER, 3 * mesh.totalPoints * sizeof(float), &mesh.biTangents[0], GL_STATIC_DRAW);
-    }
+  
 
     
 
@@ -123,22 +109,40 @@ void Model::Load(Mesh mesh) {
     glVertexAttribPointer(aNormal, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
 
-    if (mesh.textureCoords.size() > 0) {
-        glEnableVertexAttribArray(aTexCords);
-        glBindBuffer(GL_ARRAY_BUFFER, aTexCordsVBO);
-        glVertexAttribPointer(aTexCords, 2, GL_FLOAT, GL_FALSE, 0, NULL);
-    }
-    if (mesh.tangents.size() > 0) {
-        glEnableVertexAttribArray(aTangent);
-        glBindBuffer(GL_ARRAY_BUFFER, aTangentVBO);
-        glVertexAttribPointer(aTangent, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-    }
+    //if (mesh.textureCoords.size() > 0) {
+    //    glGenBuffers(1, &aTexCordsVBO);
+    //    glBindBuffer(GL_ARRAY_BUFFER, aTexCordsVBO);
+    //    glBufferData(GL_ARRAY_BUFFER, 3 * mesh.totalPoints * sizeof(float), &mesh.textureCoords[0], GL_STATIC_DRAW);
+    //}
+    //if (mesh.tangents.size() > 0) {
+    //    glGenBuffers(1, &aTangentVBO);
+    //    glBindBuffer(GL_ARRAY_BUFFER, aTangentVBO);
+    //    glBufferData(GL_ARRAY_BUFFER, 3 * mesh.totalPoints * sizeof(float), &mesh.tangents[0], GL_STATIC_DRAW);
+    //}
 
-    if (mesh.biTangents.size() > 0) {
-        glEnableVertexAttribArray(aBiTangent);
-        glBindBuffer(GL_ARRAY_BUFFER, aBiTangentVBO);
-        glVertexAttribPointer(aBiTangent, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-    }
+    //if (mesh.biTangents.size() > 0) {
+    //    glGenBuffers(1, &aBiTangentVBO);
+    //    glBindBuffer(GL_ARRAY_BUFFER, aBiTangentVBO);
+    //    glBufferData(GL_ARRAY_BUFFER, 3 * mesh.totalPoints * sizeof(float), &mesh.biTangents[0], GL_STATIC_DRAW);
+    //}
+
+
+    //if (mesh.textureCoords.size() > 0) {
+    //    glEnableVertexAttribArray(aTexCords);
+    //    glBindBuffer(GL_ARRAY_BUFFER, aTexCordsVBO);
+    //    glVertexAttribPointer(aTexCords, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+    //}
+    //if (mesh.tangents.size() > 0) {
+    //    glEnableVertexAttribArray(aTangent);
+    //    glBindBuffer(GL_ARRAY_BUFFER, aTangentVBO);
+    //    glVertexAttribPointer(aTangent, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+    //}
+
+    //if (mesh.biTangents.size() > 0) {
+    //    glEnableVertexAttribArray(aBiTangent);
+    //    glBindBuffer(GL_ARRAY_BUFFER, aBiTangentVBO);
+    //    glVertexAttribPointer(aBiTangent, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+    //}
 }
 
 void Model::Display(Camera camera,Shader shader,glm::mat4 model) {
@@ -165,20 +169,27 @@ void Model::Initialize() {
         }
     }
 
-    F0.conservativeResize(BlendShapes[0].VertexData.size(), 1);
+    F0.resize(BlendShapes[0].VertexData.size());
     F0 = BlendShapes[0].VertexData;
 
-    B_Delta.conservativeResize(BlendShapes[0].VertexData.size(), BlendShapes.size() - 1); 
-    B_w.conservativeResize(BlendShapes[0].VertexData.size(), BlendShapes.size() - 1);
-
-    weights.conservativeResize(BlendShapes.size() - 1, 1);
-    for (int i = 0; i < BlendShapes.size() - 1; i++) {
-        weights(i, 0) = 0.0;
+    
+    B_Delta.resize(BlendShapes[0].VertexData.size()); 
+    for (int i = 0; i < B_Delta.size(); i++) {
+        B_Delta[i].resize(BlendShapes.size() - 1);
     }
 
-    for (int i = 2; i < BlendShapes.size(); i++) {
+    B_w.resize(BlendShapes[0].VertexData.size());
+    for (int i = 0; i < B_Delta.size(); i++) {
+        B_w[i].resize(BlendShapes.size() - 1);
+    }
+
+    weights.resize(BlendShapes.size() - 1,0);
+    P_weights.resize(BlendShapes.size() - 1,0);
+    
+
+    for (int i = 1; i < BlendShapes.size(); i++) {
         for (int j = 0; j < BlendShapes[0].VertexData.size(); j++) {
-            B_Delta(j, i - 1) = BlendShapes[i].VertexData(j, 0);
+            B_Delta[j][ i - 1] = BlendShapes[i].VertexData[j];
         }
     }
 
@@ -186,20 +197,25 @@ void Model::Initialize() {
 }
 
 void Model::Blend() {
+    if (equal(weights.begin(), weights.end(), P_weights.begin())) {
+        std::cout << "Blend Not Called" <<std::endl;
+        return;
+    }
+    P_weights = weights;
 
     for (int i = 1; i < BlendShapes.size(); i++) {
-        for (int j = 0; j < BlendShapes[0].VertexData.rows(); j++) {
+        for (int j = 0; j < BlendShapes[0].VertexData.size(); j++) {
             int q = i - 1;
-            B_Delta(j, q) = BlendShapes[i].VertexData(j, 0) - F0(j, 0);
-            B_w(j, q) = B_Delta(j, q) * weights(q, 0); 
+            B_Delta[j][q] = BlendShapes[i].VertexData[j] - F0[j];
+            B_w[j][q] = B_Delta[j][q] * weights[q]; 
         }
     }
 
-    for (int i = 0; i < BlendShapes[0].VertexData.rows(); i++) {
+    for (int i = 0; i < BlendShapes[0].VertexData.size(); i++) {
         float total = 0; 
         for (int j = 0; j < BlendShapes.size() - 1; j++) {
-            total += B_w(i, j); 
+            total += B_w[i][j]; 
         }
-        Result.VertexData(i, 0) = F0(i, 0) + total; 
+        Result.VertexData[i] = F0[i] + total; 
     }
 }
